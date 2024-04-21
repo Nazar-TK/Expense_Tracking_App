@@ -6,5 +6,5 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 interface BitcoinRateRepository {
-    fun getBitcoinRate(): Flow<Resource<BitcoinRate>>
+    fun getBitcoinRate(isUpdateNeeded: Boolean = false): Flow<Resource<BitcoinRate>>
 }

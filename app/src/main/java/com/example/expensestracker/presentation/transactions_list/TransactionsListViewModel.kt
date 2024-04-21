@@ -28,26 +28,28 @@ class TransactionsListViewModel @Inject constructor(
 
     fun getBitcoinRate() {
 
-        if (shouldFetchBitcoinRate()) {
-            bitcoinRateRepository.getBitcoinRate().onEach { result ->
-                when (result) {
-                    is Resource.Success -> {
-                        _bitcoinRateState.value = formatBitcoinRate(
-                            BitcoinRate(
-                                result.data?.code ?: "",
-                                result.data?.rate ?: ""
-                            )
-                        )
-                        updateLastFetchTime()
-                        Log.d(TAG, "Update ${_bitcoinRateState.value}")
-                    }
+        val isRateUpdateNeeded = shouldFetchBitcoinRate()
 
-                    is Resource.Error -> {
-                        Log.d(TAG, result.message.toString())
+        bitcoinRateRepository.getBitcoinRate(isUpdateNeeded = isRateUpdateNeeded).onEach { result ->
+            when (result) {
+                is Resource.Success -> {
+                    _bitcoinRateState.value = formatBitcoinRate(
+                        BitcoinRate(
+                            result.data?.code ?: "",
+                            result.data?.rate ?: ""
+                        )
+                    )
+                    if(isRateUpdateNeeded) {
+                        updateLastFetchTime()
                     }
+                    Log.d(TAG, "Update = ${isRateUpdateNeeded} ${_bitcoinRateState.value}")
                 }
-            }.launchIn(viewModelScope)
-        }
+
+                is Resource.Error -> {
+                    Log.d(TAG, result.message.toString())
+                }
+            }
+        }.launchIn(viewModelScope)
     }
 
     private fun formatBitcoinRate(bitcoinRate: BitcoinRate): String {
@@ -59,7 +61,7 @@ class TransactionsListViewModel @Inject constructor(
         val lastFetchTimeMillis = sharedPreferences.getLong("lastFetchTimeMillis", 0)
         val currentTimeMillis = System.currentTimeMillis()
         val oneHourMillis = TimeUnit.MINUTES.toMillis(1)
-
+        Log.d(TAG, "lastFetchTimeMillis = $lastFetchTimeMillis currentTimeMillis = $currentTimeMillis = ${currentTimeMillis - lastFetchTimeMillis}")
         return currentTimeMillis - lastFetchTimeMillis >= oneHourMillis
     }
 
