@@ -1,6 +1,7 @@
 package com.example.expensestracker.presentation
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -14,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.expensestracker.R
 import com.example.expensestracker.databinding.ActivityMainBinding
 import com.example.expensestracker.domain.repository.BitcoinRateRepository
+import com.example.expensestracker.presentation.new_transaction.TransactionActivity
 import com.example.expensestracker.presentation.transactions_list.TransactionsListViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
@@ -57,6 +59,10 @@ class MainActivity: AppCompatActivity() {
 
         binding.btnRecharge.setOnClickListener {
             createAlertDialog()
+        }
+        binding.btnAddTransaction.setOnClickListener {
+            val intent = Intent(this, TransactionActivity::class.java)
+            startActivity(intent)
         }
     }
 
