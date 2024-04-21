@@ -1,7 +1,8 @@
-package com.example.expensestracker
+package com.example.expensestracker.presentation
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.example.expensestracker.R
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
