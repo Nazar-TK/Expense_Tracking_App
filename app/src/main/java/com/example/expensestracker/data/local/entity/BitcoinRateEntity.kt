@@ -6,7 +6,7 @@ import com.example.expensestracker.domain.model.BitcoinRate
 
 @Entity
 data class BitcoinRateEntity(
-    @PrimaryKey val id: Int? = null,
+    @PrimaryKey val id: Int = 1,
     val code: String?,
     val rate: String?
 ) {

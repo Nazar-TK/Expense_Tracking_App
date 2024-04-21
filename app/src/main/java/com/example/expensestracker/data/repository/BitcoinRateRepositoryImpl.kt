@@ -29,7 +29,7 @@ class BitcoinRateRepositoryImpl(
             }
         }
 
-        val rate = dao.getBitcoinRate().toBitcoinRate()
+        val rate = dao.getBitcoinRate()?.toBitcoinRate()
         emit(Resource.Success(rate))
     }
 }

@@ -6,7 +6,9 @@ import android.content.SharedPreferences
 import androidx.room.Room
 import com.example.expensestracker.data.local.ExpenseDatabase
 import com.example.expensestracker.data.remote.BitcoinRateApi
+import com.example.expensestracker.data.repository.AccountBalanceRepositoryImpl
 import com.example.expensestracker.data.repository.BitcoinRateRepositoryImpl
+import com.example.expensestracker.domain.repository.AccountBalanceRepository
 import com.example.expensestracker.domain.repository.BitcoinRateRepository
 import dagger.Module
 import dagger.Provides
@@ -47,6 +49,14 @@ object AppModule {
         api: BitcoinRateApi
     ): BitcoinRateRepository {
         return BitcoinRateRepositoryImpl(db.dao, api)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAccountBalanceRepository(
+        db: ExpenseDatabase,
+    ): AccountBalanceRepository {
+        return AccountBalanceRepositoryImpl(db.dao)
     }
 
     @Provides
