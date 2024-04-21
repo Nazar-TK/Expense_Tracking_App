@@ -13,7 +13,6 @@ class BitcoinRateRepositoryImpl(private val api: BitcoinRateApi): BitcoinRateRep
     override fun getBitcoinRate(): Flow<Resource<BitcoinRate>>  = flow {
 
         try {
-            emit(Resource.Loading())
             val bitcoinRate = api.getBitcoinRate().toBitcoinRate()
             emit(Resource.Success(bitcoinRate))
         } catch (e: HttpException) {

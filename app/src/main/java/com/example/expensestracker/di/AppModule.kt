@@ -1,5 +1,8 @@
 package com.example.expensestracker.di
 
+import android.app.Application
+import android.content.Context
+import android.content.SharedPreferences
 import com.example.expensestracker.data.remote.BitcoinRateApi
 import com.example.expensestracker.data.repository.BitcoinRateRepositoryImpl
 import com.example.expensestracker.domain.repository.BitcoinRateRepository
@@ -29,5 +32,11 @@ object AppModule {
     @Singleton
     fun provideBitcoinRateRepository(api: BitcoinRateApi): BitcoinRateRepository {
         return BitcoinRateRepositoryImpl(api)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSharedPreferences(application: Application): SharedPreferences {
+        return application.getSharedPreferences("BitcoinRatePrefs", Context.MODE_PRIVATE)
     }
 }
