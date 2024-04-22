@@ -16,8 +16,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -36,6 +36,9 @@ class TransactionsListViewModel @Inject constructor(
 
     private val _accountBalanceState = MutableStateFlow("0.0")
     val accountBalanceState: StateFlow<String> = _accountBalanceState
+
+    private val _transactionGroups = MutableStateFlow<List<RecyclerItem>>(emptyList())
+    val transactionGroups: StateFlow<List<RecyclerItem>> = _transactionGroups
     fun getBitcoinRate() {
 
         val isRateUpdateNeeded = shouldFetchBitcoinRate()
@@ -125,6 +128,51 @@ class TransactionsListViewModel @Inject constructor(
                 }
             }
             .launchIn(viewModelScope)
+    }
+
+    fun getAllTransactions() {
+
+        transactionRepository.getTransactions()
+            .onEach { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        Log.d("HERE", "Transactions got successfully")
+                        val res = result!!.data?.let { getGroupedTransactions(it) }
+                        _transactionGroups.value = res!!
+                        Log.d("HERE!", _transactionGroups.value.toString())
+                    }
+                    is Resource.Error -> {
+                        Log.d(TAG, result.message.toString())
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    // Function to group transactions by day
+    fun getGroupedTransactions(transactions: List<Transaction>): List<RecyclerItem> {
+        // Group transactions by date
+        val groupedByDate = transactions.groupBy { it.date.toLocalDate() }
+
+        // Create a list to store RecyclerItem objects
+        val recyclerItems = mutableListOf<RecyclerItem>()
+
+        // Define a date format
+        val dateFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy")
+
+        // Iterate through each group
+        for ((date, transactions) in groupedByDate) {
+            // Add a header for the date
+            recyclerItems.add(RecyclerItem.Header(date.format(dateFormatter)))
+
+            // Add each transaction as an item
+            transactions.forEach { transaction ->
+                recyclerItems.add(RecyclerItem.Item(transaction))
+            }
+        }
+        Log.d("HERE!!", recyclerItems.toString())
+
+        return recyclerItems
     }
 
     // Additional methods to handle if we already need to get bitcoin rate from server or not.

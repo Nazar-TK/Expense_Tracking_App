@@ -1,5 +1,6 @@
 package com.example.expensestracker.presentation
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -12,10 +13,12 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.expensestracker.R
 import com.example.expensestracker.databinding.ActivityMainBinding
 import com.example.expensestracker.domain.repository.BitcoinRateRepository
 import com.example.expensestracker.presentation.new_transaction.TransactionActivity
+import com.example.expensestracker.presentation.transactions_list.TransactionAdapter
 import com.example.expensestracker.presentation.transactions_list.TransactionsListViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
@@ -32,6 +35,7 @@ class MainActivity: AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private val viewModel: TransactionsListViewModel by viewModels()
+    @SuppressLint("NotifyDataSetChanged")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -56,12 +60,36 @@ class MainActivity: AppCompatActivity() {
 
         updateUI()
 
+        viewModel.getAllTransactions()
+
+        val tr = viewModel.transactionGroups
+        Log.d("HERE!!!", tr.value.toString())
+        val adapter = TransactionAdapter() // Initialize adapter with empty list
+        binding.rcView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        binding.rcView.adapter = adapter
+        adapter.updateList(tr.value)
+//        // Start observing the transactionGroups StateFlow
+//        val job = lifecycleScope.launch {
+//            viewModel.transactionGroups.collect { groups ->
+//                // Update the adapter with the new data
+//                adapter.transactionGroups = groups
+//                adapter.notifyDataSetChanged()
+//            }
+//        }
         binding.btnRecharge.setOnClickListener {
             createAlertDialog()
         }
         binding.btnAddTransaction.setOnClickListener {
             val intent = Intent(this, TransactionActivity::class.java)
             startActivity(intent)
+        }
+
+        binding.btnTest.setOnClickListener {
+
+            viewModel.getAllTransactions()
+            val tr = viewModel.transactionGroups
+            Log.d("HERE!!!!", tr.value.toString())
+            adapter.updateList(tr.value)
         }
     }
 
