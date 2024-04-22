@@ -7,7 +7,6 @@ import androidx.room.Query
 import com.example.expensestracker.data.local.entity.AccountBalanceEntity
 import com.example.expensestracker.data.local.entity.BitcoinRateEntity
 import com.example.expensestracker.data.local.entity.TransactionEntity
-import com.example.expensestracker.domain.model.BitcoinRate
 
 @Dao
 interface ExpenseDao {
@@ -29,6 +28,6 @@ interface ExpenseDao {
     // Transactions methods
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: TransactionEntity)
-    @Query ("SELECT * FROM transactionentity")
+    @Query ("SELECT * FROM transactionentity ORDER BY date DESC")
     suspend fun getTransactions() : List<TransactionEntity>
 }

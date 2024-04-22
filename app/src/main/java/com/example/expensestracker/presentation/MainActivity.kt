@@ -21,6 +21,7 @@ import com.example.expensestracker.presentation.new_transaction.TransactionActiv
 import com.example.expensestracker.presentation.transactions_list.TransactionAdapter
 import com.example.expensestracker.presentation.transactions_list.TransactionsListViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.observeOn
 import kotlinx.coroutines.launch
@@ -33,8 +34,9 @@ class MainActivity: AppCompatActivity() {
     private val TAG: String = "MainActivity"
 
     private lateinit var binding: ActivityMainBinding
-
     private val viewModel: TransactionsListViewModel by viewModels()
+    private var job: Job? = null
+
     @SuppressLint("NotifyDataSetChanged")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,36 +62,23 @@ class MainActivity: AppCompatActivity() {
 
         updateUI()
 
-        viewModel.getAllTransactions()
-
-        val tr = viewModel.transactionGroups
-        Log.d("HERE!!!", tr.value.toString())
-        val adapter = TransactionAdapter() // Initialize adapter with empty list
+        val adapter = TransactionAdapter()
         binding.rcView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         binding.rcView.adapter = adapter
-        adapter.updateList(tr.value)
-//        // Start observing the transactionGroups StateFlow
-//        val job = lifecycleScope.launch {
-//            viewModel.transactionGroups.collect { groups ->
-//                // Update the adapter with the new data
-//                adapter.transactionGroups = groups
-//                adapter.notifyDataSetChanged()
-//            }
-//        }
+
+        // Observe the transactionGroups StateFlow
+        job = lifecycleScope.launch {
+            viewModel.transactionGroups.collect { transactionGroups ->
+                // Update the RecyclerView adapter with the new data
+                adapter.updateList(transactionGroups)
+            }
+        }
         binding.btnRecharge.setOnClickListener {
             createAlertDialog()
         }
         binding.btnAddTransaction.setOnClickListener {
             val intent = Intent(this, TransactionActivity::class.java)
             startActivity(intent)
-        }
-
-        binding.btnTest.setOnClickListener {
-
-            viewModel.getAllTransactions()
-            val tr = viewModel.transactionGroups
-            Log.d("HERE!!!!", tr.value.toString())
-            adapter.updateList(tr.value)
         }
     }
 
@@ -101,6 +90,11 @@ class MainActivity: AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updateUI()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job?.cancel() // Cancel the observation job when activity is destroyed
     }
 
     private fun createAlertDialog() {
@@ -119,8 +113,6 @@ class MainActivity: AppCompatActivity() {
                     val amount = amountText.toDouble()
                     // Handle recharge with the entered amount
                     viewModel.rechargeBalance(amount)
-                    viewModel.getAccountBalance()
-
                 } else {
                     // Show error message if amount is empty
                     Toast.makeText(this, "Please enter an amount of Bitcoins", Toast.LENGTH_SHORT).show()
@@ -140,5 +132,6 @@ class MainActivity: AppCompatActivity() {
     private fun updateUI() {
         viewModel.getBitcoinRate()
         viewModel.getAccountBalance()
+        viewModel.getAllTransactions()
     }
 }

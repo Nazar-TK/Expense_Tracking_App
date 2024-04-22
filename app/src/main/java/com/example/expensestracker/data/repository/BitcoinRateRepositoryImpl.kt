@@ -1,6 +1,5 @@
 package com.example.expensestracker.data.repository
 
-import android.util.Log
 import com.example.expensestracker.core.utils.Resource
 import com.example.expensestracker.data.local.ExpenseDao
 import com.example.expensestracker.data.remote.BitcoinRateApi

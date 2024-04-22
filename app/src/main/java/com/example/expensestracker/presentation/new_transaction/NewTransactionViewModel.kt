@@ -11,7 +11,6 @@ import com.example.expensestracker.domain.model.Transaction
 import com.example.expensestracker.domain.repository.AccountBalanceRepository
 import com.example.expensestracker.domain.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -23,7 +22,7 @@ class NewTransactionViewModel @Inject constructor(
     private val transactionRepository: TransactionRepository
 ) : ViewModel() {
 
-    private val TAG: String = "TransactionsListViewModel"
+    private val TAG: String = "NewTransactionViewModel"
 
     private val _transactionSuccess = MutableLiveData<Boolean>()
     val transactionSuccess: LiveData<Boolean> = _transactionSuccess
@@ -51,7 +50,6 @@ class NewTransactionViewModel @Inject constructor(
     private fun handleBalanceSuccess(accountBalance: Double, transaction: Transaction) {
         if (accountBalance >= transaction.btcAmount) {
             val updatedBalance = accountBalance - transaction.btcAmount
-            Log.d(TAG, "New balance to be updated: $updatedBalance")
             updateBalanceAndAddTransaction(updatedBalance, transaction)
             _transactionSuccess.postValue(true)
         } else {

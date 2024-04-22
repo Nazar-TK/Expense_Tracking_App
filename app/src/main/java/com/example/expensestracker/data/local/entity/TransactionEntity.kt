@@ -5,11 +5,9 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.expensestracker.core.utils.Category
 import com.example.expensestracker.core.utils.TransactionType
-import com.example.expensestracker.domain.model.AccountBalance
 import com.example.expensestracker.domain.model.Transaction
 import kotlinx.parcelize.Parcelize
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @Entity
 @Parcelize

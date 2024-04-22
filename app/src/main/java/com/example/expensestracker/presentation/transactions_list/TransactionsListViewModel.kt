@@ -121,6 +121,7 @@ class TransactionsListViewModel @Inject constructor(
                 when (result) {
                     is Resource.Success -> {
                         Log.d(TAG, "Transaction added successfully")
+                        getAllTransactions()
                     }
                     is Resource.Error -> {
                         Log.d(TAG, result.message.toString())
@@ -136,10 +137,8 @@ class TransactionsListViewModel @Inject constructor(
             .onEach { result ->
                 when (result) {
                     is Resource.Success -> {
-                        Log.d("HERE", "Transactions got successfully")
-                        val res = result!!.data?.let { getGroupedTransactions(it) }
+                        val res = result.data?.let { getGroupedTransactions(it) }
                         _transactionGroups.value = res!!
-                        Log.d("HERE!", _transactionGroups.value.toString())
                     }
                     is Resource.Error -> {
                         Log.d(TAG, result.message.toString())
@@ -153,25 +152,17 @@ class TransactionsListViewModel @Inject constructor(
     fun getGroupedTransactions(transactions: List<Transaction>): List<RecyclerItem> {
         // Group transactions by date
         val groupedByDate = transactions.groupBy { it.date.toLocalDate() }
-
-        // Create a list to store RecyclerItem objects
         val recyclerItems = mutableListOf<RecyclerItem>()
-
-        // Define a date format
         val dateFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy")
 
-        // Iterate through each group
         for ((date, transactions) in groupedByDate) {
             // Add a header for the date
             recyclerItems.add(RecyclerItem.Header(date.format(dateFormatter)))
-
             // Add each transaction as an item
             transactions.forEach { transaction ->
                 recyclerItems.add(RecyclerItem.Item(transaction))
             }
         }
-        Log.d("HERE!!", recyclerItems.toString())
-
         return recyclerItems
     }
 
@@ -180,10 +171,6 @@ class TransactionsListViewModel @Inject constructor(
         val lastFetchTimeMillis = sharedPreferences.getLong("lastFetchTimeMillis", 0)
         val currentTimeMillis = System.currentTimeMillis()
         val oneHourMillis = TimeUnit.MINUTES.toMillis(1)
-        Log.d(
-            TAG,
-            "lastFetchTimeMillis = $lastFetchTimeMillis currentTimeMillis = $currentTimeMillis = ${currentTimeMillis - lastFetchTimeMillis}"
-        )
         return currentTimeMillis - lastFetchTimeMillis >= oneHourMillis
     }
 

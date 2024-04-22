@@ -7,13 +7,10 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.lifecycle.Observer
-import com.example.expensestracker.R
 import com.example.expensestracker.core.utils.Category
 import com.example.expensestracker.core.utils.TransactionType
-import com.example.expensestracker.databinding.ActivityMainBinding
 import com.example.expensestracker.databinding.ActivityTransactionBinding
 import com.example.expensestracker.domain.model.Transaction
-import com.example.expensestracker.presentation.transactions_list.TransactionsListViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import java.time.LocalDateTime
 
@@ -62,7 +59,6 @@ class TransactionActivity : AppCompatActivity() {
                         category = selectedCategory,
                         type = TransactionType.EXPENSE
                     )
-                    Log.d(TAG, "Add button pressed. $transaction")
                     viewModel.onAddButtonClick(transaction)
                 } else {
                     // Show error message if amount is empty
