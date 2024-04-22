@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-kapt")
+    id ("kotlin-parcelize")
     id("com.google.dagger.hilt.android")
 }
 
@@ -11,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.expensestracker"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"

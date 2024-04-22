@@ -47,15 +47,14 @@ class MainActivity: AppCompatActivity() {
         }
         lifecycleScope.launch {
             viewModel.accountBalanceState.collect { rate ->
-                // Update TextView with the emitted Bitcoin rate
+                // Update TextView with the emitted account balance
                 rate.let { rate ->
                     binding.tvBitcoinBalance.text = rate
                 }
             }
         }
 
-        viewModel.getBitcoinRate()
-        viewModel.getAccountBalance()
+        updateUI()
 
         binding.btnRecharge.setOnClickListener {
             createAlertDialog()
@@ -68,9 +67,13 @@ class MainActivity: AppCompatActivity() {
 
     override fun onRestart() {
         super.onRestart()
-        viewModel.getBitcoinRate()
+        updateUI()
     }
 
+    override fun onResume() {
+        super.onResume()
+        updateUI()
+    }
 
     private fun createAlertDialog() {
         // Inflate the layout for the dialog
@@ -106,4 +109,8 @@ class MainActivity: AppCompatActivity() {
         alertDialog.show()
     }
 
+    private fun updateUI() {
+        viewModel.getBitcoinRate()
+        viewModel.getAccountBalance()
+    }
 }

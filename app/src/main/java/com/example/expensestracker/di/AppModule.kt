@@ -8,8 +8,10 @@ import com.example.expensestracker.data.local.ExpenseDatabase
 import com.example.expensestracker.data.remote.BitcoinRateApi
 import com.example.expensestracker.data.repository.AccountBalanceRepositoryImpl
 import com.example.expensestracker.data.repository.BitcoinRateRepositoryImpl
+import com.example.expensestracker.data.repository.TransactionRepositoryImpl
 import com.example.expensestracker.domain.repository.AccountBalanceRepository
 import com.example.expensestracker.domain.repository.BitcoinRateRepository
+import com.example.expensestracker.domain.repository.TransactionRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -57,6 +59,14 @@ object AppModule {
         db: ExpenseDatabase,
     ): AccountBalanceRepository {
         return AccountBalanceRepositoryImpl(db.dao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideTransactionRepository(
+        db: ExpenseDatabase,
+    ): TransactionRepository {
+        return TransactionRepositoryImpl(db.dao)
     }
 
     @Provides

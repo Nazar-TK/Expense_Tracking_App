@@ -6,9 +6,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.expensestracker.core.utils.Resource
 import com.example.expensestracker.domain.model.AccountBalance
-import com.example.expensestracker.domain.model.BitcoinRate
 import com.example.expensestracker.domain.repository.AccountBalanceRepository
 import com.example.expensestracker.domain.repository.BitcoinRateRepository
+import com.example.expensestracker.domain.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +21,8 @@ import javax.inject.Inject
 class TransactionsListViewModel @Inject constructor(
     private val sharedPreferences: SharedPreferences,
     private val bitcoinRateRepository: BitcoinRateRepository,
-    private val accountBalanceRepository: AccountBalanceRepository
+    private val accountBalanceRepository: AccountBalanceRepository,
+    private val transactionRepository: TransactionRepository
 ) : ViewModel() {
 
     private val TAG: String = "TransactionsListViewModel"
@@ -76,7 +77,7 @@ class TransactionsListViewModel @Inject constructor(
                         ?: 0.0 // Default to 0 if account balance is null
                     val updatedBalance = accountBalance + amount
                     Log.d(TAG, "New balance to be updated: $updatedBalance")
-                    accountBalanceRepository.rechargeBalance(AccountBalance(updatedBalance))
+                    accountBalanceRepository.updateBalance(AccountBalance(updatedBalance))
                         .onEach {
                             when (it) {
                                 is Resource.Success -> {
@@ -96,6 +97,7 @@ class TransactionsListViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
+    // Additional methods to handle if we already need to get bitcoin rate from server or not.
     private fun shouldFetchBitcoinRate(): Boolean {
         val lastFetchTimeMillis = sharedPreferences.getLong("lastFetchTimeMillis", 0)
         val currentTimeMillis = System.currentTimeMillis()

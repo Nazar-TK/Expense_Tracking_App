@@ -20,7 +20,7 @@ class AccountBalanceRepositoryImpl(private val dao: ExpenseDao): AccountBalanceR
         }
     }
 
-    override fun rechargeBalance(accountBalance: AccountBalance): Flow<Resource<Boolean>> = flow {
+    override fun updateBalance(accountBalance: AccountBalance): Flow<Resource<Boolean>> = flow {
         try {
             dao.insertBalance(accountBalance.toAccountBalanceEntity())
             Log.d("TransactionsListViewModel", "rechargeBalance is updated")
