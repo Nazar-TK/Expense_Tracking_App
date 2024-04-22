@@ -5,7 +5,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.expensestracker.core.utils.Resource
+import com.example.expensestracker.core.utils.TransactionType
 import com.example.expensestracker.domain.model.AccountBalance
+import com.example.expensestracker.domain.model.Transaction
 import com.example.expensestracker.domain.repository.AccountBalanceRepository
 import com.example.expensestracker.domain.repository.BitcoinRateRepository
 import com.example.expensestracker.domain.repository.TransactionRepository
@@ -14,6 +16,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -69,32 +73,58 @@ class TransactionsListViewModel @Inject constructor(
     }
 
     fun rechargeBalance(amount: Double) {
-
-        accountBalanceRepository.getAccountBalance().onEach { result ->
-            when (result) {
-                is Resource.Success -> {
-                    val accountBalance = result.data?.accountBalance
-                        ?: 0.0 // Default to 0 if account balance is null
-                    val updatedBalance = accountBalance + amount
-                    Log.d(TAG, "New balance to be updated: $updatedBalance")
-                    accountBalanceRepository.updateBalance(AccountBalance(updatedBalance))
-                        .onEach {
-                            when (it) {
-                                is Resource.Success -> {
-                                    Log.d(TAG, "Account balance updated successfully")
-                                    getAccountBalance()
-                                }
-                                is Resource.Error -> {
-                                    Log.d(TAG, it.message.toString())
-                                }
-                            }
-                        }.launchIn(viewModelScope)
+            accountBalanceRepository.getAccountBalance()
+                .onEach { result ->
+                    when (result) {
+                        is Resource.Success -> {
+                            val accountBalance = result.data?.accountBalance ?: 0.0
+                            val updatedBalance = accountBalance + amount
+                            updateBalanceAndAddTransaction(updatedBalance, amount)
+                        }
+                        is Resource.Error -> {
+                            Log.d(TAG, result.message.toString())
+                        }
+                    }
                 }
-                is Resource.Error -> {
-                    Log.d(TAG, result.message.toString())
+                .launchIn(viewModelScope)
+    }
+
+    private fun updateBalanceAndAddTransaction(updatedBalance: Double, amount: Double) {
+        accountBalanceRepository.updateBalance(AccountBalance(updatedBalance))
+            .onEach { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        Log.d(TAG, "Account balance updated successfully")
+                        _accountBalanceState.value = "$updatedBalance BTC"
+                        addRechargeTransaction(amount)
+                    }
+                    is Resource.Error -> {
+                        Log.d(TAG, result.message.toString())
+                    }
                 }
             }
-        }.launchIn(viewModelScope)
+            .launchIn(viewModelScope)
+    }
+
+    private fun addRechargeTransaction(amount: Double) {
+        val transaction = Transaction(
+            date = LocalDateTime.now(),
+            btcAmount = amount,
+            category = null,
+            type = TransactionType.INCOME
+        )
+        transactionRepository.addTransaction(transaction)
+            .onEach { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        Log.d(TAG, "Transaction added successfully")
+                    }
+                    is Resource.Error -> {
+                        Log.d(TAG, result.message.toString())
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     // Additional methods to handle if we already need to get bitcoin rate from server or not.
@@ -113,5 +143,4 @@ class TransactionsListViewModel @Inject constructor(
         val currentTimeMillis = System.currentTimeMillis()
         sharedPreferences.edit().putLong("lastFetchTimeMillis", currentTimeMillis).apply()
     }
-
 }
