@@ -12,8 +12,8 @@ import java.time.LocalDateTime
 @Entity
 @Parcelize
 data class TransactionEntity(
-    @PrimaryKey
-    val id: Int? = null,
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
     val date: LocalDateTime,
     val btcAmount: Double,
     val category: Category?,

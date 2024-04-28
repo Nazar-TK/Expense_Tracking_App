@@ -37,7 +37,6 @@ class TransactionsListViewModel @Inject constructor(
     private val accountBalanceRepository: AccountBalanceRepository,
     private val transactionRepository: TransactionRepository
 ) : ViewModel() {
-
     companion object {
         private const val PAGE_SIZE = 6
         private const val INITIAL_PAGE = 0
@@ -93,7 +92,7 @@ class TransactionsListViewModel @Inject constructor(
                         }
 
                         if (!canPaginate) {
-                            Log.d(TAG, "getPagingTransactions() PAGINATION_EXHAUST")
+                            Log.d(TAG, "getPagingTransactions(): PAGINATION_EXHAUST")
                             _pagingState.update { PaginationState.PAGINATION_EXHAUST }
                         }
                     }
@@ -164,7 +163,7 @@ class TransactionsListViewModel @Inject constructor(
             .onEach { result ->
                 when (result) {
                     is Resource.Success -> {
-                        Log.d(TAG, "Account balance updated successfully")
+                        Log.d(TAG, "updateBalanceAndAddTransaction(): Account balance updated successfully")
                         _accountBalanceState.value = "$updatedBalance BTC"
                         addRechargeTransaction(amount)
                     }
@@ -188,7 +187,7 @@ class TransactionsListViewModel @Inject constructor(
             .onEach { result ->
                 when (result) {
                     is Resource.Success -> {
-                        Log.d(TAG, "addRechargeTransaction() Transaction added successfully")
+                        Log.d(TAG, "addRechargeTransaction(): Transaction added successfully")
                         addLatestTransactionIfItIsNew()
                     }
 
@@ -211,13 +210,13 @@ class TransactionsListViewModel @Inject constructor(
                         if(_transactionGroups.value.isEmpty() && !res.isNullOrEmpty()) {
                             _transactionGroups.value = removeItemsWithDuplicateHeaders(res.plus(_transactionGroups.value))
                             numOfNewTransactions += 1
-                            Log.d(TAG, "addLatestTransactionIfItIsNew() latest transaction added.")
+                            Log.d(TAG, "addLatestTransactionIfItIsNew(): latest transaction added.")
                         }
                         // Check if first items are not similar
                         else if (_transactionGroups.value.isNotEmpty() && !res.isNullOrEmpty() && res[1] != _transactionGroups.value[1]) {
                             _transactionGroups.value = removeItemsWithDuplicateHeaders(res.plus(_transactionGroups.value))
                             numOfNewTransactions += 1
-                            Log.d(TAG, "addLatestTransactionIfItIsNew() latest transaction added.")
+                            Log.d(TAG, "addLatestTransactionIfItIsNew(): latest transaction added.")
                         }
                     }
 
@@ -230,9 +229,9 @@ class TransactionsListViewModel @Inject constructor(
     }
 
     // Function to group transactions by day
-    private fun getGroupedTransactions(transactions: List<Transaction>): List<RecyclerItem> {
+    private fun getGroupedTransactions(transactionList: List<Transaction>): List<RecyclerItem> {
         // Group transactions by date
-        val groupedByDate = transactions.groupBy { it.date.toLocalDate() }
+        val groupedByDate = transactionList.groupBy { it.date.toLocalDate() }
         val recyclerItems = mutableListOf<RecyclerItem>()
         val dateFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy")
         val addedHeaders = mutableSetOf<LocalDate>()

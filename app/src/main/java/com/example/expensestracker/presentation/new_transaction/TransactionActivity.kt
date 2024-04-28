@@ -2,7 +2,6 @@ package com.example.expensestracker.presentation.new_transaction
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -16,8 +15,6 @@ import java.time.LocalDateTime
 
 @AndroidEntryPoint
 class TransactionActivity : AppCompatActivity() {
-
-    private val TAG: String = "TransactionActivity"
 
     private lateinit var binding: ActivityTransactionBinding
 
@@ -45,7 +42,6 @@ class TransactionActivity : AppCompatActivity() {
         })
 
         binding.apply {
-
             btnAddTransaction.setOnClickListener {
                 val amountText = etBtcAmount.text.toString()
                 val selectedCategory = categories[spinnerCategory.selectedItemPosition]
@@ -66,6 +62,5 @@ class TransactionActivity : AppCompatActivity() {
                 }
             }
         }
-
     }
 }
