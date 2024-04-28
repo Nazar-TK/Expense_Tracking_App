@@ -21,6 +21,7 @@ import com.example.expensestracker.domain.repository.BitcoinRateRepository
 import com.example.expensestracker.presentation.new_transaction.TransactionActivity
 import com.example.expensestracker.presentation.transactions_list.TransactionAdapter
 import com.example.expensestracker.presentation.transactions_list.TransactionsListViewModel
+import com.example.expensestracker.presentation.utils.PaginationState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
@@ -61,20 +62,9 @@ class MainActivity: AppCompatActivity() {
             }
         }
         updateUI()
-        //viewModel.clearPaging()
+        viewModel.getPagingTransactions()
         setupRecyclerView()
 
-//        val adapter = TransactionAdapter()
-//        binding.rcView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-//        binding.rcView.adapter = adapter
-//
-//        // Observe the transactionGroups StateFlow
-//        job = lifecycleScope.launch {
-//            viewModel.transactionGroups.collect { transactionGroups ->
-//                // Update the RecyclerView adapter with the new data
-//                adapter.updateList(transactionGroups)
-//            }
-//        }
         binding.btnRecharge.setOnClickListener {
             createAlertDialog()
         }
@@ -106,7 +96,7 @@ class MainActivity: AppCompatActivity() {
                 val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
                 val totalItemCount = layoutManager.itemCount
                 if (lastVisibleItemPosition == totalItemCount - 1) {
-                    if (viewModel.pagingState.value == TransactionsListViewModel.PaginationState.REQUEST_INACTIVE) {
+                    if (viewModel.pagingState.value == PaginationState.REQUEST_INACTIVE) {
                         viewModel.getPagingTransactions()
                     }
                 }
@@ -118,12 +108,6 @@ class MainActivity: AppCompatActivity() {
         super.onRestart()
         Log.d("HERE!","onRestart() updateUI()")
         updateUI()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Log.d("HERE!","onResume() updateUI()")
-        //updateUI()
     }
 
     override fun onDestroy() {
@@ -167,6 +151,6 @@ class MainActivity: AppCompatActivity() {
         Log.d("HERE!","updateUI()")
         viewModel.getBitcoinRate()
         viewModel.getAccountBalance()
-        viewModel.getPagingTransactions()
+        viewModel.addLatestTransactionIfItIsNew()
     }
 }

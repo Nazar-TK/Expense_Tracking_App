@@ -14,6 +14,7 @@ import com.example.expensestracker.domain.model.Transaction
 import com.example.expensestracker.domain.repository.AccountBalanceRepository
 import com.example.expensestracker.domain.repository.BitcoinRateRepository
 import com.example.expensestracker.domain.repository.TransactionRepository
+import com.example.expensestracker.presentation.utils.PaginationState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,22 +38,12 @@ class TransactionsListViewModel @Inject constructor(
     private val transactionRepository: TransactionRepository
 ) : ViewModel() {
 
-    enum class PaginationState {
-        REQUEST_INACTIVE,
-        LOADING,
-        PAGINATING,
-        ERROR,
-        PAGINATION_EXHAUST,
-        EMPTY,
-    }
-
     companion object {
-        const val PAGE_SIZE = 5
-        const val INITIAL_PAGE = 0
+        private const val PAGE_SIZE = 6
+        private const val INITIAL_PAGE = 0
     }
 
     private val TAG: String = "TransactionsListViewModel"
-    private val TAG1: String = "HERE!"
 
     private val _bitcoinRateState = MutableStateFlow("")
     val bitcoinRateState: StateFlow<String> = _bitcoinRateState
@@ -63,81 +54,58 @@ class TransactionsListViewModel @Inject constructor(
     private val _transactionGroups = MutableStateFlow<List<RecyclerItem>>(emptyList())
     val transactionGroups: StateFlow<List<RecyclerItem>> = _transactionGroups
 
-    private val _pagingState = MutableStateFlow<PaginationState>(PaginationState.LOADING)
+    private val _pagingState = MutableStateFlow(PaginationState.LOADING)
     val pagingState: StateFlow<PaginationState> = _pagingState.asStateFlow()
 
     private var page = INITIAL_PAGE
-    private var numOfElementsInCurrentPage = 0
-    private val latestTransactionItem = MutableStateFlow<RecyclerItem?>(null)
-    var canPaginate by mutableStateOf(false)
+    private var numOfNewTransactions = 0
+    private var canPaginate by mutableStateOf(false)
 
     fun getPagingTransactions() {
-        if (page == INITIAL_PAGE || (page != INITIAL_PAGE && canPaginate) && _pagingState.value == PaginationState.REQUEST_INACTIVE) {
+        if (page == INITIAL_PAGE || canPaginate && _pagingState.value == PaginationState.REQUEST_INACTIVE) {
             _pagingState.update { if (page == INITIAL_PAGE) PaginationState.LOADING else PaginationState.PAGINATING }
         }
 
-        transactionRepository.getPagingTransactions(PAGE_SIZE, page * PAGE_SIZE)
+        // To get proper offset we should add number of new transactions, created during current session
+        transactionRepository.getPagingTransactions(PAGE_SIZE, page * PAGE_SIZE + numOfNewTransactions)
             .onEach { result ->
                 when (result) {
                     is Resource.Success -> {
                         canPaginate = result.data?.size == PAGE_SIZE
 
                         val res = result.data?.let { getGroupedTransactions(it) }
-                        Log.d(TAG1, "canPaginate $canPaginate ${result.data?.size}")
                         if (page == INITIAL_PAGE) {
                             if (res!!.isEmpty()) {
                                 _pagingState.update { PaginationState.EMPTY }
-                                Log.d(TAG1, "EMPTY")
                                 return@onEach
                             }
-                            Log.d(TAG1, "INITIAL_PAGE")
                             _transactionGroups.value = res
                         } else {
-                            Log.d(TAG1, "NEW PAGE1 ${_transactionGroups.value}")
-                            if(_pagingState.value == PaginationState.PAGINATION_EXHAUST) {
-                                Log.d(TAG1, "1 numOfElementsInCurrentPage = $numOfElementsInCurrentPage  result.data?.size = ${result.data?.size}")
-                                if (numOfElementsInCurrentPage < (result.data?.size ?: 0)) {
-                                    addLatestTransaction()
-                                    numOfElementsInCurrentPage = result.data?.size ?: 0
-                                    Log.d(TAG1, "2 numOfElementsInCurrentPage = $numOfElementsInCurrentPage  result.data?.size = ${result.data?.size}")
-                                }
-
-                            } else
-                            _transactionGroups.value = removeItemsWithDuplicateHeaders(_transactionGroups.value.plus(res ?: emptyList()))
-                            Log.d(TAG1, "NEW PAGE2 ${_transactionGroups.value}")
+                            _transactionGroups.value = removeItemsWithDuplicateHeaders(
+                                _transactionGroups.value.plus(res ?: emptyList())
+                            )
                         }
 
                         _pagingState.update { PaginationState.REQUEST_INACTIVE }
 
                         if (canPaginate) {
                             page++
-                            Log.d(TAG1, "page++ $page")
                         }
 
                         if (!canPaginate) {
-                            Log.d(TAG1, "canPaginate++ PAGINATION_EXHAUST")
-                            numOfElementsInCurrentPage = result.data?.size ?: 0
+                            Log.d(TAG, "getPagingTransactions() PAGINATION_EXHAUST")
                             _pagingState.update { PaginationState.PAGINATION_EXHAUST }
                         }
                     }
-
                     is Resource.Error -> {
                         Log.d(TAG, result.message.toString())
-                        Log.d(TAG1, "ERROR")
                         _pagingState.update { if (page == INITIAL_PAGE) PaginationState.ERROR else PaginationState.PAGINATION_EXHAUST }
                     }
                 }
             }.launchIn(viewModelScope)
     }
 
-    fun clearPaging() {
-        page = INITIAL_PAGE
-        _pagingState.update { PaginationState.LOADING }
-        canPaginate = false
-    }
-
     fun getBitcoinRate() {
-
         val isRateUpdateNeeded = shouldFetchBitcoinRate()
 
         bitcoinRateRepository.getBitcoinRate(isUpdateNeeded = isRateUpdateNeeded).onEach { result ->
@@ -148,7 +116,7 @@ class TransactionsListViewModel @Inject constructor(
                     if (isRateUpdateNeeded) {
                         updateLastFetchTime()
                     }
-                    Log.d(TAG, "Update = ${isRateUpdateNeeded} ${_bitcoinRateState.value}")
+                    Log.d(TAG, "Update = $isRateUpdateNeeded ${_bitcoinRateState.value}")
                 }
 
                 is Resource.Error -> {
@@ -220,8 +188,8 @@ class TransactionsListViewModel @Inject constructor(
             .onEach { result ->
                 when (result) {
                     is Resource.Success -> {
-                        Log.d(TAG, "Transaction added successfully")
-                        addLatestTransaction()
+                        Log.d(TAG, "addRechargeTransaction() Transaction added successfully")
+                        addLatestTransactionIfItIsNew()
                     }
 
                     is Resource.Error -> {
@@ -232,31 +200,27 @@ class TransactionsListViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun addLatestTransaction() {
+    fun addLatestTransactionIfItIsNew() {
         transactionRepository.getLatestTransaction()
             .onEach { result ->
                 when (result) {
                     is Resource.Success -> {
                         val res = result.data?.let { getGroupedTransactions(listOf(it)) }
-                        _transactionGroups.value = removeItemsWithDuplicateHeaders(res?.plus(_transactionGroups.value)?: emptyList())
+
+                        // If there are no transactions yet than add first one
+                        if(_transactionGroups.value.isEmpty() && !res.isNullOrEmpty()) {
+                            _transactionGroups.value = removeItemsWithDuplicateHeaders(res.plus(_transactionGroups.value))
+                            numOfNewTransactions += 1
+                            Log.d(TAG, "addLatestTransactionIfItIsNew() latest transaction added.")
+                        }
+                        // Check if first items are not similar
+                        else if (_transactionGroups.value.isNotEmpty() && !res.isNullOrEmpty() && res[1] != _transactionGroups.value[1]) {
+                            _transactionGroups.value = removeItemsWithDuplicateHeaders(res.plus(_transactionGroups.value))
+                            numOfNewTransactions += 1
+                            Log.d(TAG, "addLatestTransactionIfItIsNew() latest transaction added.")
+                        }
                     }
 
-                    is Resource.Error -> {
-                        Log.d(TAG, result.message.toString())
-                    }
-                }
-            }
-            .launchIn(viewModelScope)
-    }
-
-    private fun getLatestTransactionItem() {
-        transactionRepository.getLatestTransaction()
-            .onEach { result ->
-                when (result) {
-                    is Resource.Success -> {
-                        latestTransactionItem.value = RecyclerItem.Item(result.data!!)
-                        Log.d(TAG1, "getLatestTransactionItem() ${latestTransactionItem.value}")
-                    }
                     is Resource.Error -> {
                         Log.d(TAG, result.message.toString())
                     }
@@ -306,7 +270,6 @@ class TransactionsListViewModel @Inject constructor(
                 }
             }
         }
-
         return uniqueItems
     }
 
