@@ -14,6 +14,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.expensestracker.R
 import com.example.expensestracker.databinding.ActivityMainBinding
 import com.example.expensestracker.domain.repository.BitcoinRateRepository
@@ -59,20 +60,21 @@ class MainActivity: AppCompatActivity() {
                 }
             }
         }
-
         updateUI()
+        //viewModel.clearPaging()
+        setupRecyclerView()
 
-        val adapter = TransactionAdapter()
-        binding.rcView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-        binding.rcView.adapter = adapter
-
-        // Observe the transactionGroups StateFlow
-        job = lifecycleScope.launch {
-            viewModel.transactionGroups.collect { transactionGroups ->
-                // Update the RecyclerView adapter with the new data
-                adapter.updateList(transactionGroups)
-            }
-        }
+//        val adapter = TransactionAdapter()
+//        binding.rcView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+//        binding.rcView.adapter = adapter
+//
+//        // Observe the transactionGroups StateFlow
+//        job = lifecycleScope.launch {
+//            viewModel.transactionGroups.collect { transactionGroups ->
+//                // Update the RecyclerView adapter with the new data
+//                adapter.updateList(transactionGroups)
+//            }
+//        }
         binding.btnRecharge.setOnClickListener {
             createAlertDialog()
         }
@@ -82,14 +84,46 @@ class MainActivity: AppCompatActivity() {
         }
     }
 
+    private fun setupRecyclerView() {
+        val layoutManager = LinearLayoutManager(this)
+        binding.rcView.layoutManager = layoutManager
+        val adapter = TransactionAdapter()
+
+        // Observe the transactionGroups StateFlow
+        job = lifecycleScope.launch {
+            viewModel.transactionGroups.collect { transactionGroups ->
+                // Update the RecyclerView adapter with the new data
+                adapter.updateList(transactionGroups)
+            }
+        }
+
+        binding.rcView.adapter = adapter
+
+        binding.rcView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
+                val totalItemCount = layoutManager.itemCount
+                if (lastVisibleItemPosition == totalItemCount - 1) {
+                    if (viewModel.pagingState.value == TransactionsListViewModel.PaginationState.REQUEST_INACTIVE) {
+                        viewModel.getPagingTransactions()
+                    }
+                }
+            }
+        })
+    }
+
     override fun onRestart() {
         super.onRestart()
+        Log.d("HERE!","onRestart() updateUI()")
         updateUI()
     }
 
     override fun onResume() {
         super.onResume()
-        updateUI()
+        Log.d("HERE!","onResume() updateUI()")
+        //updateUI()
     }
 
     override fun onDestroy() {
@@ -130,8 +164,9 @@ class MainActivity: AppCompatActivity() {
     }
 
     private fun updateUI() {
+        Log.d("HERE!","updateUI()")
         viewModel.getBitcoinRate()
         viewModel.getAccountBalance()
-        viewModel.getAllTransactions()
+        viewModel.getPagingTransactions()
     }
 }

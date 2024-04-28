@@ -18,6 +18,25 @@ class TransactionRepositoryImpl(private val dao: ExpenseDao): TransactionReposit
         }
     }
 
+    override fun getLatestTransaction(): Flow<Resource<Transaction>> = flow {
+        try {
+            val transaction = dao.getLatestTransaction().toTransaction()
+            emit(Resource.Success(transaction))
+        } catch (e: Exception) {
+            emit(Resource.Error(message = "Could not get latest transaction data from database."))
+        }
+    }
+
+    override fun getPagingTransactions(limit: Int, offset: Int): Flow<Resource<List<Transaction>>> = flow {
+        try {
+            Log.d("HERE!","limit=$limit offset=$offset")
+            val transactions = dao.getPagingTransactions(limit, offset).map { it.toTransaction() }
+            emit(Resource.Success(transactions))
+        } catch (e: Exception) {
+            emit(Resource.Error(message = "Could not get transactions data from database."))
+        }
+    }
+
     override fun addTransaction(transaction: Transaction): Flow<Resource<Boolean>> = flow {
         try {
             dao.insertTransaction(transaction.toTransactionEntity())

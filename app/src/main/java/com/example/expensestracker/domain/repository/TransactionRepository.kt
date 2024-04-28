@@ -8,5 +8,9 @@ interface TransactionRepository {
 
     fun getTransactions(): Flow<Resource<List<Transaction>>>
 
+    fun getLatestTransaction(): Flow<Resource<Transaction>>
+
+    fun getPagingTransactions(limit: Int, offset: Int): Flow<Resource<List<Transaction>>>
+
     fun addTransaction(transaction: Transaction): Flow<Resource<Boolean>>
 }
