@@ -57,7 +57,6 @@ class TransactionsListViewModel @Inject constructor(
     val pagingState: StateFlow<PaginationState> = _pagingState.asStateFlow()
 
     private var page = INITIAL_PAGE
-    private var numOfNewTransactions = 0
     private var canPaginate by mutableStateOf(false)
 
     fun getPagingTransactions() {
@@ -66,7 +65,7 @@ class TransactionsListViewModel @Inject constructor(
         }
 
         // To get proper offset we should add number of new transactions, created during current session
-        transactionRepository.getPagingTransactions(PAGE_SIZE, page * PAGE_SIZE + numOfNewTransactions)
+        transactionRepository.getPagingTransactions(PAGE_SIZE, page * PAGE_SIZE)
             .onEach { result ->
                 when (result) {
                     is Resource.Success -> {
@@ -80,7 +79,7 @@ class TransactionsListViewModel @Inject constructor(
                             }
                             _transactionGroups.value = res
                         } else {
-                            _transactionGroups.value = removeItemsWithDuplicateHeaders(
+                            _transactionGroups.value = sortAndExtractTransactionsDescending(
                                 _transactionGroups.value.plus(res ?: emptyList())
                             )
                         }
@@ -205,17 +204,8 @@ class TransactionsListViewModel @Inject constructor(
                 when (result) {
                     is Resource.Success -> {
                         val res = result.data?.let { getGroupedTransactions(listOf(it)) }
-
-                        // If there are no transactions yet than add first one
-                        if(_transactionGroups.value.isEmpty() && !res.isNullOrEmpty()) {
-                            _transactionGroups.value = removeItemsWithDuplicateHeaders(res.plus(_transactionGroups.value))
-                            numOfNewTransactions += 1
-                            Log.d(TAG, "addLatestTransactionIfItIsNew(): latest transaction added.")
-                        }
-                        // Check if first items are not similar
-                        else if (_transactionGroups.value.isNotEmpty() && !res.isNullOrEmpty() && res[1] != _transactionGroups.value[1]) {
-                            _transactionGroups.value = removeItemsWithDuplicateHeaders(res.plus(_transactionGroups.value))
-                            numOfNewTransactions += 1
+                        if(!res.isNullOrEmpty()) {
+                            _transactionGroups.value = sortAndExtractTransactionsDescending(res.plus(_transactionGroups.value))
                             Log.d(TAG, "addLatestTransactionIfItIsNew(): latest transaction added.")
                         }
                     }
@@ -226,6 +216,26 @@ class TransactionsListViewModel @Inject constructor(
                 }
             }
             .launchIn(viewModelScope)
+    }
+
+    private fun sortAndExtractTransactionsDescending(items: List<RecyclerItem>): List<RecyclerItem> {
+        // Filter out the RecyclerItem objects of type Item and extract their transactions
+        val transactions = items.filterIsInstance<RecyclerItem.Item>().map { it.transaction }
+
+        // Sort the transactions by date in descending order
+        val sortedTransactions = transactions.sortedByDescending { it.date }
+        val uniqueSortedTrans = extractUniqueTransactions(sortedTransactions)
+        val groupedTrans = getGroupedTransactions(uniqueSortedTrans)
+
+        return removeItemsWithDuplicateHeaders(groupedTrans)
+    }
+
+    private fun extractUniqueTransactions(transactions: List<Transaction>): List<Transaction> {
+        val uniqueTransactions = mutableSetOf<Transaction>()
+        for (transaction in transactions) {
+            uniqueTransactions.add(transaction)
+        }
+        return uniqueTransactions.toList()
     }
 
     // Function to group transactions by day
