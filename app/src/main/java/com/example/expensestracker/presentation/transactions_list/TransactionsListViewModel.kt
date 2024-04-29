@@ -19,11 +19,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -79,7 +77,7 @@ class TransactionsListViewModel @Inject constructor(
                             }
                             _transactionGroups.value = res
                         } else {
-                            _transactionGroups.value = sortAndExtractTransactionsDescending(
+                            _transactionGroups.value = sortItemsByDateDescending(
                                 _transactionGroups.value.plus(res ?: emptyList())
                             )
                         }
@@ -205,7 +203,7 @@ class TransactionsListViewModel @Inject constructor(
                     is Resource.Success -> {
                         val res = result.data?.let { getGroupedTransactions(listOf(it)) }
                         if(!res.isNullOrEmpty()) {
-                            _transactionGroups.value = sortAndExtractTransactionsDescending(res.plus(_transactionGroups.value))
+                            _transactionGroups.value = sortItemsByDateDescending(res.plus(_transactionGroups.value))
                             Log.d(TAG, "addLatestTransactionIfItIsNew(): latest transaction added.")
                         }
                     }
@@ -218,7 +216,7 @@ class TransactionsListViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun sortAndExtractTransactionsDescending(items: List<RecyclerItem>): List<RecyclerItem> {
+    private fun sortItemsByDateDescending(items: List<RecyclerItem>): List<RecyclerItem> {
         // Filter out the RecyclerItem objects of type Item and extract their transactions
         val transactions = items.filterIsInstance<RecyclerItem.Item>().map { it.transaction }
 
