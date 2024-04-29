@@ -1,5 +1,6 @@
 package com.example.expensestracker.presentation.transactions_list
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -9,18 +10,20 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 class TransactionAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-    private val VIEW_TYPE_DATE = 0
-    private val VIEW_TYPE_TRANSACTION = 1
+    companion object {
+        private const val VIEW_TYPE_DATE = 0
+        private const val VIEW_TYPE_TRANSACTION = 1
+    }
 
     private val itemList = arrayListOf<Any>()
-    class DateViewHolder(val headerBinding: DateItemBinding) : RecyclerView.ViewHolder(headerBinding.root) {
-
+    class DateViewHolder(private val headerBinding: DateItemBinding) : RecyclerView.ViewHolder(headerBinding.root) {
         fun bind(item: RecyclerItem.Header) {
             headerBinding.tvDate.text = item.date
         }
     }
 
-    class TransactionViewHolder(val itemBinding: TransactionItemBinding) : RecyclerView.ViewHolder(itemBinding.root) {
+    class TransactionViewHolder(private val itemBinding: TransactionItemBinding) : RecyclerView.ViewHolder(itemBinding.root) {
+        @SuppressLint("SetTextI18n")
         fun bind(item: RecyclerItem.Item) {
             // Bind transaction data to ViewHolder
             itemBinding.tvTime.text = "Time: ${formatTime(item.transaction.date)}"
@@ -37,6 +40,7 @@ class TransactionAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             return dateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
         }
     }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
             VIEW_TYPE_DATE -> DateViewHolder(DateItemBinding.inflate(LayoutInflater.from(parent.context), parent, false))
@@ -62,6 +66,7 @@ class TransactionAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
        }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     fun updateList(updatedList: List<Any>) {
         itemList.clear()
         itemList.addAll(updatedList)

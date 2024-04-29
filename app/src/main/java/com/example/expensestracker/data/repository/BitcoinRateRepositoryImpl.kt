@@ -19,7 +19,6 @@ class BitcoinRateRepositoryImpl(
         if(isUpdateNeeded) {
             try {
                 val bitcoinRate = api.getBitcoinRate().toBitcoinRateEntity()
-                dao.deleteBitcoinRate()
                 dao.insertBitcoinRate(bitcoinRate)
             } catch (e: HttpException) {
                 emit(Resource.Error(message = e.localizedMessage ?: "An unexpected error occurred"))

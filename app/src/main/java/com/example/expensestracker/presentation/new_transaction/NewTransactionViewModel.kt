@@ -53,7 +53,7 @@ class NewTransactionViewModel @Inject constructor(
             updateBalanceAndAddTransaction(updatedBalance, transaction)
             _transactionSuccess.postValue(true)
         } else {
-            Log.d(TAG, "Insufficient account balance")
+            Log.d(TAG, "handleBalanceSuccess(): Insufficient account balance")
             _transactionSuccess.postValue(false)
         }
     }
@@ -63,7 +63,7 @@ class NewTransactionViewModel @Inject constructor(
             .onEach { result ->
                 when (result) {
                     is Resource.Success -> {
-                        Log.d(TAG, "Account balance updated successfully")
+                        Log.d(TAG, "updateBalanceAndAddTransaction(): Account balance updated successfully")
                         addTransaction(transaction)
                     }
                     is Resource.Error -> {
@@ -79,7 +79,7 @@ class NewTransactionViewModel @Inject constructor(
             .onEach { result ->
                 when (result) {
                     is Resource.Success -> {
-                        Log.d(TAG, "Transaction added successfully")
+                        Log.d(TAG, "addTransaction(): Transaction added successfully")
                     }
                     is Resource.Error -> {
                         Log.d(TAG, result.message.toString())

@@ -28,6 +28,8 @@ interface ExpenseDao {
     // Transactions methods
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: TransactionEntity)
-    @Query ("SELECT * FROM transactionentity ORDER BY date DESC")
-    suspend fun getTransactions() : List<TransactionEntity>
+    @Query ("SELECT * FROM transactionentity ORDER BY id DESC LIMIT 1")
+    suspend fun getLatestTransaction() : TransactionEntity
+    @Query("SELECT * FROM transactionentity ORDER BY date DESC LIMIT :limit OFFSET :offset")
+    suspend fun getPagingTransactions(limit: Int, offset: Int) : List<TransactionEntity>
 }
