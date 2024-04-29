@@ -38,7 +38,7 @@ class TransactionsListViewModel @Inject constructor(
     private val transactionRepository: TransactionRepository
 ) : ViewModel() {
     companion object {
-        private const val PAGE_SIZE = 6
+        private const val PAGE_SIZE = 20
         private const val INITIAL_PAGE = 0
     }
 
@@ -286,7 +286,7 @@ class TransactionsListViewModel @Inject constructor(
     private fun shouldFetchBitcoinRate(): Boolean {
         val lastFetchTimeMillis = sharedPreferences.getLong("lastFetchTimeMillis", 0)
         val currentTimeMillis = System.currentTimeMillis()
-        val oneHourMillis = TimeUnit.MINUTES.toMillis(1)
+        val oneHourMillis = TimeUnit.HOURS.toMillis(1)
         return currentTimeMillis - lastFetchTimeMillis >= oneHourMillis
     }
 
